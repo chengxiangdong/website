@@ -2,6 +2,7 @@
 title: API 优先级和公平性
 content_type: concept
 min-kubernetes-server-version: v1.18
+weight: 110
 ---
 
 <!-- overview -->
@@ -60,7 +61,7 @@ feature enabled. API Priority and Fairness _does_ apply to **watch**
 requests. When API Priority and Fairness is disabled, **watch** requests
 are not subject to the `--max-requests-inflight` limit.
 -->
-属于 “长时间运行” 类型的某些请求（例如远程命令执行或日志拖尾）不受 API 优先级和公平性过滤器的约束。
+属于“长时间运行”类型的某些请求（例如远程命令执行或日志拖尾）不受 API 优先级和公平性过滤器的约束。
 如果未启用 APF 特性，即便设置 `--max-requests-inflight` 标志，该类请求也不受约束。
 APF **不** 适用于 **watch** 请求。当 APF 被禁用时，**watch** 请求不受 `--max-requests-inflight` 限制。
 {{< /caution >}}
@@ -74,8 +75,8 @@ APF **不** 适用于 **watch** 请求。当 APF 被禁用时，**watch** 请求
 
 <!--
 The API Priority and Fairness feature is controlled by a feature gate
-and is enabled by default.  See
-[Feature Gates](/docs/reference/command-line-tools-reference/feature-gates/)
+and is enabled by default.  See [Feature
+Gates](/docs/reference/command-line-tools-reference/feature-gates/)
 for a general explanation of feature gates and how to enable and
 disable them.  The name of the feature gate for APF is
 "APIPriorityAndFairness".  This feature also involves an {{<
@@ -186,7 +187,7 @@ that is proportional to that estimated number.
 上述并发管理的描述是基线情况。其中，各个请求具有不同的持续时间，
 但在与一个优先级的并发限制进行比较时，这些请求在任何给定时刻都以同等方式进行计数。
 在这个基线场景中，每个请求占用一个并发单位。
-我们用 “席位（Seat）” 一词来表示一个并发单位，其灵感来自火车或飞机上每位乘客占用一个固定座位的供应方式。
+我们用 “席位（Seat）” 一词来表示一个并发单位，其灵感来自火车或飞机上每位乘客占用一个固定席位的供应方式。
 
 但有些请求所占用的席位不止一个。有些请求是服务器预估将返回大量对象的 **list** 请求。
 和所需运行时间相近的其他请求相比，我们发现这类请求会给服务器带来异常沉重的负担。
@@ -841,13 +842,13 @@ poorly-behaved workloads that may be harming system health.
 * `apiserver_flowcontrol_rejected_requests_total` is a counter vector
   (cumulative since server start) of requests that were rejected,
   broken down by the labels `flow_schema` (indicating the one that
-  matched the request), `priority_evel` (indicating the one to which
+  matched the request), `priority_level` (indicating the one to which
   the request was assigned), and `reason`.  The `reason` label will be
   have one of the following values:
 -->
 * `apiserver_flowcontrol_rejected_requests_total` 是一个计数器向量，
   记录被拒绝的请求数量（自服务器启动以来累计值），
-  由标签 `flow_chema`（表示与请求匹配的 FlowSchema）、`priority_evel`
+  由标签 `flow_schema`（表示与请求匹配的 FlowSchema）、`priority_level`
   （表示分配给请该求的优先级）和 `reason` 来区分。
   `reason` 标签将具有以下值之一：
   <!--
@@ -914,7 +915,8 @@ poorly-behaved workloads that may be harming system health.
 <!--
 * `apiserver_flowcontrol_read_vs_write_request_count_watermarks` is a
   histogram vector of high or low water marks of the number of
-  requests broken down by the labels `phase` (which takes on the
+  requests (divided by the corresponding limit to get a ratio in the
+  range 0 to 1) broken down by the labels `phase` (which takes on the
   values `waiting` and `executing`) and `request_kind` (which takes on
   the values `mutating` and `readOnly`); the label `mark` takes on
   values `high` and `low`.  The water marks are accumulated over
@@ -923,7 +925,7 @@ poorly-behaved workloads that may be harming system health.
   water marks show the range of values that occurred between samples.
 -->
 * `apiserver_flowcontrol_read_vs_write_request_count_watermarks` 是一个直方图向量，
-  记录请求数量的高/低水位线，
+  记录请求数量（除以相应的边界值得到 0 到 1 的比率）的高/低水位线，
   由标签 `phase`（取值为 `waiting` 和 `executing`）和 `request_kind`
   （取值为 `mutating` 和 `readOnly`）拆分；标签 `mark` 取值为 `high` 和 `low`。
   `apiserver_flowcontrol_read_vs_write_request_count_samples` 向量观察到有值新增，
@@ -932,11 +934,11 @@ poorly-behaved workloads that may be harming system health.
 <!--
 * `apiserver_flowcontrol_current_inqueue_requests` is a gauge vector
   holding the instantaneous number of queued (not executing) requests,
-  broken down by the labels `priorityLevel` and `flowSchema`.
+  broken down by the labels `priority_level` and `flow_schema`.
 -->
 * `apiserver_flowcontrol_current_inqueue_requests` 是一个表向量，
   记录包含排队中的（未执行）请求的瞬时数量，
-  由标签 `priorityLevel` 和 `flowSchema` 拆分。
+  由标签 `priority_level` 和 `flow_schema` 拆分。
 
 <!--
 * `apiserver_flowcontrol_current_executing_requests` is a gauge vector
@@ -954,7 +956,7 @@ poorly-behaved workloads that may be harming system health.
   the labels `priority_level` and `flow_schema`.
 -->
 * `apiserver_flowcontrol_request_concurrency_in_use` 是一个规范向量，
-  包含占用座位的瞬时数量，由标签 `priority_level` 和 `flow_schema` 进一步区分。
+  包含占用席位的瞬时数量，由标签 `priority_level` 和 `flow_schema` 进一步区分。
 
 <!--
 * `apiserver_flowcontrol_priority_level_request_count_samples` is a
@@ -963,17 +965,22 @@ poorly-behaved workloads that may be harming system health.
   values `waiting` and `executing`) and `priority_level`.  Each
   histogram gets observations taken periodically, up through the last
   activity of the relevant sort.  The observations are made at a high
-  rate.
+  rate.  Each observed value is a ratio, between 0 and 1, of a number
+  of requests divided by the corresponding limit on the number of
+  requests (queue length limit for waiting and concurrency limit for
+  executing).
 -->
 * `apiserver_flowcontrol_priority_level_request_count_samples` 是一个直方图向量，
   记录当前请求的观测值，由标签 `phase`（取值为`waiting` 和 `executing`）和
   `priority_level` 进一步区分。
   每个直方图都会定期进行观察，直到相关类别的最后活动为止。观察频率高。
-
+  每个观察值都是请求数除以相应请求数极限（等待队列的最长度和执行的最大并发数）的比率，
+  介于 0 和 1 之间。
 <!--
 * `apiserver_flowcontrol_priority_level_request_count_watermarks` is a
   histogram vector of high or low water marks of the number of
-  requests broken down by the labels `phase` (which takes on the
+  requests (divided by the corresponding limit to get a ratio in the
+  range 0 to 1) broken down by the labels `phase` (which takes on the
   values `waiting` and `executing`) and `priority_level`; the label
   `mark` takes on values `high` and `low`.  The water marks are
   accumulated over windows bounded by the times when an observation
@@ -982,11 +989,55 @@ poorly-behaved workloads that may be harming system health.
   water marks show the range of values that occurred between samples.
 -->
 * `apiserver_flowcontrol_priority_level_request_count_watermarks` 是一个直方图向量，
-  记录请求数的高/低水位线，由标签 `phase`（取值为 `waiting` 和 `executing`）和
-  `priority_level` 拆分；
+  记录请求数量（除以相应的边界值得到 0 到 1 的比率）的高/低水位线，
+  由标签 `phase`（取值为 `waiting` 和 `executing`）和 `priority_level` 拆分；
   标签 `mark` 取值为 `high` 和 `low`。
   `apiserver_flowcontrol_priority_level_request_count_samples` 向量观察到有值新增，
   则该向量累积。这些水位线显示了样本值的范围。
+
+<!--
+* `apiserver_flowcontrol_priority_level_seat_count_samples` is a
+  histogram vector of observations of the utilization of a priority
+  level's concurrency limit, broken down by `priority_level`.  This
+  utilization is the fraction (number of seats occupied) /
+  (concurrency limit).  This metric considers all stages of execution
+  (both normal and the extra delay at the end of a write to cover for
+  the corresponding notification work) of all requests except WATCHes;
+  for those it considers only the initial stage that delivers
+  notifications of pre-existing objects.  Each histogram in the vector
+  is also labeled with `phase: executing` (there is no seat limit for
+  the waiting phase).  Each histogram gets observations taken
+  periodically, up through the last activity of the relevant sort.
+  The observations
+  are made at a high rate.
+-->
+
+* `apiserver_flowcontrol_priority_level_seat_count_samples` 是一个直方图向量，
+  它表示优先级级别的并发限制的使用情况，用 `priority_level` 区分。
+  利用率是通过（所占用的席位数）/（并发限制）计算得到分数。
+  该指标覆盖了除 WATCH 之外的，所有请求的所有执行阶段，
+  既有正常耗时，也有写入通知工作时的额外的耗时。
+  对于这些对象，它只考虑传递已存在对象通知的初始阶段。
+  向量中的每个直方图向量也被标记为 `phase: executing`（对于等待阶段没有席位限制）。
+  每个直方图都定期进行观察，直到相关排序的最后一个活动。以较高的频率观察。
+
+<!--
+* `apiserver_flowcontrol_priority_level_seat_count_watermarks` is a
+  histogram vector of high or low water marks of the utilization of a
+  priority level's concurrency limit, broken down by `priority_level`
+  and `mark` (which takes on values `high` and `low`).  Each histogram
+  in the vector is also labeled with `phase: executing` (there is no
+  seat limit for the waiting phase).  The water marks are accumulated
+  over windows bounded by the times when an observation was added to
+  `apiserver_flowcontrol_priority_level_seat_count_samples`.  These
+  water marks show the range of values that occurred between samples.
+-->
+* `apiserver_flowcontrol_priority_level_seat_count_watermarks`
+  是优先级并发限制利用率的高或低水位线的直方图向量，
+  由 `priority_level` 和 `mark`（取值为 `high` 和 `low`）区分。
+  向量中的每个直方图也被标记为 `phase: executing`（对于等待阶段没有席位限制）。
+  当观察结果被添加到 `apiserver_flowcontrol_priority_level_seat_count_samples` 时，
+  水位线在窗口上累积。这些水位线显示了样本值的范围。
 
 <!--
 * `apiserver_flowcontrol_request_queue_length_after_enqueue` is a
@@ -1019,7 +1070,7 @@ poorly-behaved workloads that may be harming system health.
 
 <!--
 * `apiserver_flowcontrol_request_concurrency_limit` is a gauge vector
-  hoding the computed concurrency limit (based on the API server's
+  holding the computed concurrency limit (based on the API server's
   total concurrency limit and PriorityLevelConfigurations' concurrency
   shares), broken down by the label `priority_level`.
 -->
@@ -1030,8 +1081,8 @@ poorly-behaved workloads that may be harming system health.
 <!--
 * `apiserver_flowcontrol_request_wait_duration_seconds` is a histogram
   vector of how long requests spent queued, broken down by the labels
-  `flowSchema` (indicating which one matched the request),
-  `priorityLevel` (indicating the one to which the request was
+  `flow_schema` (indicating which one matched the request),
+  `priority_level` (indicating the one to which the request was
   assigned), and `execute` (indicating whether the request started
   executing).
 -->
@@ -1055,8 +1106,8 @@ poorly-behaved workloads that may be harming system health.
 <!--
 * `apiserver_flowcontrol_request_execution_seconds` is a histogram
   vector of how long requests took to actually execute, broken down by
-  the labels `flowSchema` (indicating which one matched the request)
-  and `priorityLevel` (indicating the one to which the request was
+  the labels `flow_schema` (indicating which one matched the request)
+  and `priority_level` (indicating the one to which the request was
   assigned).
 -->
 * `apiserver_flowcontrol_request_execution_seconds` 是一个直方图向量，
@@ -1064,13 +1115,25 @@ poorly-behaved workloads that may be harming system health.
   由标签 `flow_schema`（表示与请求匹配的 FlowSchema）和
   `priority_level`（表示分配给该请求的优先级）进一步区分。
 
+* `apiserver_flowcontrol_work_estimated_seats` is a histogram vector
+  of the number of estimated seats (maximum of initial and final stage
+  of execution) associated with requests, broken down by `flow_schema`
+  and `priority_level`.
+
+* `apiserver_flowcontrol_request_dispatch_no_accommodation_total` is a
+  counter vec of the number of events that in principle could have led
+  to a request being dispatched but did not, due to lack of available
+  concurrency, broken down by `flow_schema` and `priority_level`.  The
+  relevant sorts of events are arrival of a request and completion of
+  a request.
+
 <!--
 ### Debug endpoints
 
 When you enable the API Priority and Fairness feature, the `kube-apiserver`
 serves the following additional paths at its HTTP[S] ports.
 -->
-### 调试端点    {#Debug-endpoints}
+### 调试端点 {#Debug-endpoints}
 
 启用 APF 特性后， kube-apiserver 会在其 HTTP/HTTPS 端口提供以下路径：
 
